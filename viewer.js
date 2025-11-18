@@ -53,9 +53,8 @@ let touchStartX = 0;
 let touchEndX = 0;
 const overlayBackButton = document.getElementById('fullscreenBackButton');
 let overlayMode = null;
-// PDF кэш больше не нужен - используем iframe
-
-// PDF.js больше не используется - используем iframe для прямого просмотра PDF
+// Кэш для конвертированных PDF страниц
+const pdfCache = new Map();
 
 function setOverlayMode(mode) {
     overlayMode = mode;
@@ -80,14 +79,6 @@ overlayBackButton.addEventListener('click', () => {
             break;
         case 'pdf':
             closePdfViewer();
-            // Перезагружаем страницу для возврата к списку
-            const urlParams = new URLSearchParams(window.location.search);
-            const section = urlParams.get('section');
-            if (section) {
-                window.location.href = `viewer.html?section=${section}`;
-            } else {
-                window.location.href = 'index.html';
-            }
             break;
         case 'iframe':
         default:
@@ -309,53 +300,156 @@ function closeVideoViewer() {
     resetUrl();
 }
 
-// Открытие PDF в полноэкранном режиме через iframe (работает с file://)
-function openPdfViewer(pdfFile, pdfName) {
-    const viewerContainer = document.getElementById('viewerContainer');
-    const header = document.getElementById('viewerHeader');
-    const content = document.getElementById('viewerContent');
-    
-    viewerContainer.style.display = 'block';
-    // Убираем padding и margin для максимальной ширины
-    viewerContainer.style.padding = '0';
-    viewerContainer.style.margin = '0';
-    // Скрываем шапку с кнопкой "Назад", используем только полупрозрачную кнопку
-    header.style.display = 'none';
-    setOverlayMode('pdf');
-    
-    // Создаем полноэкранный просмотрщик PDF на всю ширину
-    content.innerHTML = `
-        <div class="pdf-viewer-fullscreen fade-in" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; margin: 0; padding: 0; overflow: hidden;">
-            <iframe 
-                src="${encodeURI(pdfFile)}" 
-                style="width: 100%; height: 100%; border: none; border-radius: 0; display: block;"
-                type="application/pdf"
-            ></iframe>
-        </div>
-    `;
-    
-    // Обновляем заголовок (он скрыт, но на всякий случай)
-    document.getElementById('viewerTitle').textContent = pdfName || 'Презентация';
+// Конвертация PDF в изображения
+async function convertPdfToImages(pdfFile, pdfName) {
+    // Проверяем кэш
+    if (pdfCache.has(pdfFile)) {
+        return pdfCache.get(pdfFile);
+    }
+
+    const loadingIndicator = document.getElementById('pdfLoadingIndicator');
+    loadingIndicator.style.display = 'flex';
+
+    try {
+        // Проверяем наличие PDF.js
+        if (typeof pdfjsLib === 'undefined') {
+            throw new Error('PDF.js не загружен');
+        }
+
+        // Загружаем PDF файл
+        // Для file:// протокола браузеры блокируют fetch/XMLHttpRequest из-за CORS
+        // Используем относительные пути напрямую - PDF.js попробует загрузить их
+        let pdfData;
+        const isFileProtocol = window.location.protocol === 'file:';
+        
+        if (isFileProtocol) {
+            // Для file:// протокола используем относительный путь напрямую
+            // PDF.js может попробовать загрузить через относительный путь
+            // Если путь уже относительный (без file://), используем его как есть
+            if (pdfFile.startsWith('file://')) {
+                // Убираем префикс file:// и делаем относительный путь
+                const url = new URL(pdfFile);
+                pdfData = url.pathname.replace(/^\/[A-Z]:/, '').replace(/\\/g, '/');
+            } else {
+                // Уже относительный путь
+                pdfData = pdfFile;
+            }
+        } else {
+            // Для http/https протоколов используем fetch
+            try {
+                const response = await fetch(pdfFile);
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    pdfData = { data: arrayBuffer };
+                } else {
+                    pdfData = pdfFile;
+                }
+            } catch (fetchError) {
+                // Если fetch не работает, используем URL напрямую
+                pdfData = pdfFile;
+            }
+        }
+
+        // Загружаем PDF
+        const loadingTask = pdfjsLib.getDocument(pdfData);
+        const pdf = await loadingTask.promise;
+        const numPages = pdf.numPages;
+
+        const images = [];
+        
+        // Конвертируем каждую страницу в изображение
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            
+            // Вычисляем масштаб для высокого качества
+            const viewport = page.getViewport({ scale: 2.0 });
+            
+            // Создаем canvas
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Рендерим страницу на canvas
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+            // Конвертируем canvas в data URL
+            const imageDataUrl = canvas.toDataURL('image/png');
+            
+            images.push({
+                name: `${pdfName} - Страница ${pageNum}`,
+                file: imageDataUrl,
+                isDataUrl: true
+            });
+        }
+
+        // Сохраняем в кэш
+        pdfCache.set(pdfFile, images);
+        
+        loadingIndicator.style.display = 'none';
+        return images;
+    } catch (error) {
+        console.error('Ошибка при конвертации PDF:', error);
+        loadingIndicator.style.display = 'none';
+        
+        // Показываем сообщение об ошибке с более подробной информацией
+        let errorMessage = 'Не удалось загрузить PDF файл.';
+        const isFileProtocol = window.location.protocol === 'file:';
+        
+        if (isFileProtocol) {
+            errorMessage += '\n\nПриложение открыто через протокол file://, который имеет ограничения безопасности браузера.\n\n';
+            errorMessage += 'Для работы с PDF файлами рекомендуется:\n';
+            errorMessage += '1. Запустить приложение через веб-сервер (http://localhost)\n';
+            errorMessage += '2. Или использовать упакованное PWA/APK приложение\n';
+            errorMessage += '3. Или открыть PDF файлы напрямую в браузере';
+        } else if (error.message && error.message.includes('CORS')) {
+            errorMessage += ' Проблема с доступом к файлу из-за политики CORS.';
+        } else if (error.message && error.message.includes('Invalid PDF') || error.name === 'MissingPDFException') {
+            if (isFileProtocol) {
+                errorMessage += '\n\nБраузер блокирует доступ к локальным файлам через file:// протокол.\n';
+                errorMessage += 'Попробуйте запустить приложение через веб-сервер.';
+            } else {
+                errorMessage += ' Файл поврежден или не является корректным PDF.';
+            }
+        } else {
+            errorMessage += ' Убедитесь, что файл доступен и не поврежден.';
+        }
+        alert(errorMessage);
+        throw error;
+    }
+}
+
+// Открытие PDF через конвертацию в изображения
+async function openPdfViewer(pdfFile, pdfName) {
+    try {
+        // Конвертируем PDF в изображения
+        const pdfImages = await convertPdfToImages(pdfFile, pdfName);
+        
+        if (pdfImages.length === 0) {
+            alert('PDF файл не содержит страниц');
+            return;
+        }
+
+        // Устанавливаем список фото для просмотра
+        currentPhotoList = pdfImages;
+        currentPhotoIndex = 0;
+
+        // Устанавливаем режим overlay для PDF
+        setOverlayMode('pdf');
+        
+        // Открываем первую страницу в модальном окне фото
+        openPhotoModal(pdfImages[0].file, 0, 'pdf');
+    } catch (error) {
+        console.error('Ошибка при открытии PDF:', error);
+    }
 }
 
 function closePdfViewer() {
-    const viewerContainer = document.getElementById('viewerContainer');
-    const header = document.getElementById('viewerHeader');
-    const content = document.getElementById('viewerContent');
-    
-    // Очищаем iframe
-    const iframe = content.querySelector('iframe');
-    if (iframe) {
-        iframe.src = '';
-    }
-    
-    // Восстанавливаем padding и margin
-    viewerContainer.style.padding = '';
-    viewerContainer.style.margin = '';
-    // Восстанавливаем шапку
-    header.style.display = 'flex';
-    setOverlayMode(null);
-    resetUrl();
+    // Закрываем модальное окно фото (PDF теперь открывается через него)
+    closePhotoModal();
 }
 
 function openPhotoModal(file, index, source) {
@@ -374,18 +468,29 @@ function openPhotoModal(file, index, source) {
         // Эта функция больше не используется для презентаций
         // Используется openPdfPresentation вместо неё
         return;
+    } else if (source === 'pdf') {
+        // Для PDF список уже установлен в openPdfViewer
+        // Не изменяем currentPhotoList
     } else {
         currentPhotoList = galleryPhotos;
     }
 
     if (typeof index !== 'number' || Number.isNaN(index)) {
-        // Ищем по имени файла
-        currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file === file);
-        if (currentPhotoIndex < 0) {
-            // Если не найдено, пробуем найти по части пути
-            const fileName = file.split('/').pop();
-            currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file.includes(fileName));
+        // Ищем по имени файла или data URL
+        if (source === 'pdf' && file.startsWith('data:')) {
+            // Для PDF используем индекс напрямую
+            currentPhotoIndex = 0;
+        } else {
+            currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file === file);
+            if (currentPhotoIndex < 0) {
+                // Если не найдено, пробуем найти по части пути
+                const fileName = file.split('/').pop();
+                currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file.includes(fileName));
+            }
         }
+    } else if (source === 'pdf') {
+        // Для PDF используем переданный индекс
+        currentPhotoIndex = index;
     } else if (source === 'certificates') {
         // Используем индекс для поиска правильного изображения
         const targetItem = sections.certificates.items[index];
@@ -417,7 +522,10 @@ function openPhotoModal(file, index, source) {
 
     viewerContainer.style.display = 'none';
     modal.classList.add('active');
-    setOverlayMode('photo');
+    // Для PDF режим уже установлен в openPdfViewer, не перезаписываем
+    if (source !== 'pdf') {
+        setOverlayMode('photo');
+    }
 }
 
 function closePhotoModal() {
@@ -511,7 +619,8 @@ window.openDriveGallery = function(index, source) {
 };
 
 // Регистрация Service Worker для оффлайн работы
-if ('serviceWorker' in navigator) {
+// Service Worker работает только через http/https, не через file://
+if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
     window.addEventListener('load', () => {
         if (!window.serviceWorkerRegistered) {
             navigator.serviceWorker.register('./service-worker.js')
@@ -548,13 +657,14 @@ function requestFullscreen() {
 }
 
 // Переход в полноэкранный режим при загрузке
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        requestFullscreen();
-    }, 300);
-});
+// Полноэкранный режим требует пользовательского жеста, поэтому не делаем автоматически
+// window.addEventListener('load', () => {
+//     setTimeout(() => {
+//         requestFullscreen();
+//     }, 300);
+// });
 
-// Также пробуем при первом взаимодействии пользователя
+// Пробуем при первом взаимодействии пользователя
 let fullscreenAttempted = false;
 ['click', 'touchstart', 'keydown'].forEach(event => {
     document.addEventListener(event, () => {

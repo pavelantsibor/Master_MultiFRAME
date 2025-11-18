@@ -5,7 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Просмотр материалов MultiFrame">
     <meta name="theme-color" content="#00644F">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MultiFrame">
     <title>MultiFrame - Просмотр</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -52,6 +60,22 @@
         <div class="video-title-overlay" id="videoViewerTitle"></div>
     </div>
 
+    <!-- Индикатор загрузки PDF -->
+    <div id="pdfLoadingIndicator" class="pdf-loading-indicator" style="display: none;">
+        <div class="pdf-loading-content">
+            <div class="pdf-loading-spinner"></div>
+            <p>Загрузка PDF...</p>
+        </div>
+    </div>
+
+    <!-- PDF.js библиотека -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Настройка worker для PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
     <script src="viewer.js"></script>
 </body>
 </html>

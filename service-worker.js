@@ -1,5 +1,5 @@
 // Service Worker для оффлайн работы приложения MultiFrame
-const CACHE_NAME = 'multiframe-offline-v1';
+const CACHE_NAME = 'multiframe-offline-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,7 +7,16 @@ const urlsToCache = [
   './app.js',
   './viewer.js',
   './styles.css',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './logo-multiframe.png',
+  './calculation.png',
+  './play.png',
+  './sound.png',
+  './presentation.png',
+  './certification.png',
+  './picture.png'
 ];
 
 // Установка Service Worker и кэширование основных файлов
