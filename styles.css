@@ -420,7 +420,7 @@ body {
 .card-icon {
     width: 126px;
     height: 126px;
-    margin: 90px auto 1.5rem;
+    margin: 70px auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -511,7 +511,7 @@ body {
         height: 112px;
         min-width: 112px;
         min-height: 112px;
-        margin-top: 90px;
+        margin-top: 70px;
         margin-bottom: 1rem;
         flex-shrink: 0;
     }
@@ -604,7 +604,7 @@ body {
         height: 112px;
         min-width: 112px;
         min-height: 112px;
-        margin-top: 90px;
+        margin-top: 70px;
         flex-shrink: 0;
     }
 
@@ -693,7 +693,7 @@ body {
         height: 84px;
         min-width: 84px;
         min-height: 84px;
-        margin-top: 70px;
+        margin-top: 50px;
         margin-bottom: 0.5rem;
         flex-shrink: 0;
     }
