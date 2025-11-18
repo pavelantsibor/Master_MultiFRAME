@@ -1,0 +1,1314 @@
+/* Оптимизация производительности */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Скрываем курсор ввода текста для всех элементов, кроме полей ввода */
+*:not(input):not(textarea):not([contenteditable="true"]) {
+    caret-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Разрешаем курсор и выделение только для полей ввода */
+input,
+textarea,
+[contenteditable="true"] {
+    caret-color: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Дополнительно скрываем курсор для кнопок и других интерактивных элементов */
+button,
+a,
+label,
+.card,
+.form-group,
+.error-message,
+.static-field,
+h1, h2, h3, h4, h5, h6,
+span,
+div:not([contenteditable="true"]) {
+    caret-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+/* Предотвращаем получение фокуса элементами, которые не должны его получать */
+button:focus,
+a:focus,
+label:focus,
+.card:focus,
+.form-group:focus,
+.error-message:focus,
+.static-field:focus,
+h1:focus, h2:focus, h3:focus, h4:focus, h5:focus, h6:focus,
+span:focus,
+div:focus:not([contenteditable="true"]):not(input):not(textarea) {
+    outline: none !important;
+    caret-color: transparent !important;
+}
+
+/* Оптимизация для мобильных устройств */
+@media (max-width: 768px) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.1s !important;
+        animation-duration: 0.1s !important;
+    }
+    
+    /* Отключаем сложные эффекты на мобильных */
+    .card::before,
+    .header::before,
+    body::before {
+        display: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:root {
+    --accent-color: #01644f;
+    --accent-hover: #015a47;
+    --text-primary: #111111;
+    --text-secondary: #5f6b73;
+    --bg-page: #ffffff;
+    --bg-card: #ffffff;
+    --bg-subtle: #f5f7f8;
+    --border-color: #e1e5e8;
+    --success-color: #1a7f5f;
+    --shadow: 0 6px 20px rgba(17, 24, 39, 0.07);
+    --shadow-lg: 0 12px 30px rgba(17, 24, 39, 0.12);
+    --heading-color: #4a4a4a;
+}
+
+/* Чекбоксы в светлой теме — фирменный зелёный */
+input[type="checkbox"] {
+    accent-color: var(--accent-color);
+}
+
+/* Тёмная тема — лаконичные переопределения переменных */
+body.theme-dark {
+    --text-primary: #e6e7ea;
+    --text-secondary: #a4acb4;
+    --bg-page: #2d2e33;
+    --bg-card: #2f3036;
+    --bg-subtle: #26272c;
+    --border-color: #3a3b42;
+    --success-color: #2ab38b;
+    --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.5);
+    --heading-color: #ffffff;
+    background: #2d2e33;
+}
+
+body.theme-dark::before {
+    display: none;
+}
+
+/* Тёмная тема - без прозрачности */
+body.theme-dark .card {
+    background: #2f3036;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .card::before {
+    display: none;
+}
+
+/* Чекбоксы в тёмной теме — более светлый цвет для видимости */
+body.theme-dark input[type="checkbox"] {
+    accent-color: #a4acb4;
+    filter: brightness(1.2);
+}
+
+body.theme-dark input[type="checkbox"]:checked {
+    accent-color: #a4acb4;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #f5f7f8;
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 16px;
+    line-height: 1.6;
+    position: relative;
+}
+
+body::before {
+    display: none;
+}
+
+html {
+    scroll-behavior: auto;
+    scroll-padding-top: 20px;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-subtle);
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--bg-subtle);
+}
+
+*::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #01644f;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+    border: 1px solid #015a47;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    display: none;
+}
+
+.header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.brand-logo {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: clamp(36px, 8vw, 72px);
+    width: auto;
+    display: block;
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Переключатель темы в scheme-header */
+.scheme-header .theme-toggle {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.theme-switch {
+    display: inline-block;
+}
+
+.theme-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-track {
+    position: relative;
+    width: 64px;
+    height: 32px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    box-shadow: var(--shadow);
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.switch-thumb {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    right: 3px;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.icon-sun, .icon-moon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+}
+
+/* Минималистичные значки */
+.icon-sun {
+    background: #4a4a4a;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+}
+
+.icon-moon {
+    background:
+      radial-gradient(circle at 70% 30%, transparent 8px, #ffffff 9px);
+    border-radius: 50%;
+}
+
+.theme-switch input:checked + .switch-track {
+    background: #26272c;
+    border-color: #2f3036;
+}
+
+.theme-switch input:checked + .switch-track .switch-thumb {
+    transform: translateX(-32px);
+    background: #2f3036;
+    border-color: #3a3b42;
+}
+
+.theme-switch input:checked + .switch-track .icon-sun { opacity: 0.5; }
+.theme-switch input:not(:checked) + .switch-track .icon-moon { opacity: 0.5; }
+
+.subtitle {
+    color: #ffffff;
+    font-size: 1.1rem;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid #e1e5e8;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    display: none;
+}
+
+/* Анимация раскрытия для блоков расчёта - упрощена для мобильных */
+#paramsCalcCard,
+#quickCalcCard {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    transition: max-height 0.2s ease, opacity 0.15s ease;
+}
+
+#paramsCalcCard.expanded,
+#quickCalcCard.expanded {
+    max-height: 2000px;
+    opacity: 1;
+    margin-bottom: 16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+/* Сохраняем стили для quickCalcCard */
+#quickCalcCard {
+    background: #ffffff;
+    border: 2px dashed #e1e5e8;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark #quickCalcCard {
+    background: #2f3036;
+    border: 2px dashed #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: var(--heading-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.error-message {
+    display: block;
+    color: #e53e3e;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    min-height: 1.2em;
+}
+
+.form-group input.error {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.12);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    position: relative;
+    cursor: help;
+}
+
+.static-field {
+    width: 100%;
+    padding: 10px;
+    background: #f5f7f8;
+    border: 1px dashed #e1e5e8;
+    border-radius: 10px;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+}
+
+body.theme-dark .static-field {
+    background: #26272c;
+    border: 1px dashed #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.form-group input[type="number"],
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid #e1e5e8;
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.15s ease;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+}
+
+body.theme-dark .form-group input[type="number"],
+body.theme-dark .form-group input[type="text"] {
+    background: #2f3036;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для стрелок прокрутки полей number */
+.form-group input[type="number"]::-webkit-inner-spin-button {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.form-group input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    cursor: pointer;
+}
+
+/* Стилизация стрелок в тёмной теме */
+body.theme-dark .form-group input[type="number"]::-webkit-inner-spin-button {
+    filter: invert(1) brightness(2);
+    opacity: 0.15;
+}
+
+body.theme-dark .form-group input[type="number"]::-webkit-outer-spin-button {
+    filter: invert(1) brightness(2);
+    opacity: 0.15;
+}
+
+body.theme-dark .form-group input[type="number"]::-webkit-inner-spin-button:hover {
+    opacity: 0.4;
+}
+
+body.theme-dark .form-group input[type="number"]::-webkit-outer-spin-button:hover {
+    opacity: 0.4;
+}
+
+.form-group input[type="number"]:focus,
+.form-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(1, 100, 79, 0.2), 0 2px 8px 0 rgba(1, 100, 79, 0.15);
+    background: #ffffff;
+}
+
+body.theme-dark .form-group input[type="number"]:focus,
+body.theme-dark .form-group input[type="text"]:focus {
+    background: #35363c;
+    box-shadow: 0 0 0 3px rgba(1, 100, 79, 0.3), 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.form-group label:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--accent-color);
+    color: #ffffff;
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+.btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.calc-group {
+    margin-bottom: 24px;
+}
+
+.calc-group:last-child {
+    margin-bottom: 0;
+}
+
+.calc-mode-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0 0 6px;
+    line-height: 1.45;
+}
+
+.calc-mode-hint.hint-expanded {
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+.calc-mode-hint span {
+    display: inline-block;
+}
+
+.btn-secondary {
+    background: #f5f7f8;
+    color: var(--text-primary);
+    border: 1px solid #e1e5e8;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+.toggle-indicator {
+    transition: transform 0.25s ease, opacity 0.2s ease;
+    transform: rotate(0deg);
+    opacity: 0.5;
+    position: absolute;
+    left: 20px;
+}
+
+.btn-secondary.expanded-btn .toggle-indicator {
+    transform: rotate(180deg);
+    opacity: 0.6;
+}
+
+body.theme-dark .btn-secondary {
+    background: #26272c;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Зелёные кнопки для раскрывающихся блоков в сложенном состоянии */
+.btn-secondary.expanded-btn {
+    background: #01644f;
+    color: #ffffff;
+    border-color: #01644f;
+    box-shadow: 0 6px 20px rgba(1, 100, 79, 0.25);
+}
+
+.btn-secondary.expanded-btn:hover {
+    background: #015a47;
+    border-color: #015a47;
+}
+
+body.theme-dark .btn-secondary.expanded-btn {
+    background: #02966f;
+    border-color: #02966f;
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+body.theme-dark .btn-secondary.expanded-btn:hover {
+    background: #01795a;
+    border-color: #01795a;
+}
+
+.btn-secondary:hover {
+    background: #ffffff;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
+    border-color: #d1d5d9;
+}
+
+body.theme-dark .btn-secondary:hover {
+    background: #2f3036;
+    border-color: #4a4b52;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+.btn:active {
+    opacity: 0.9;
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tabs-container {
+    margin-bottom: 20px;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-radius: 8px 8px 0 0;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.canvas-container {
+    position: relative;
+    background: #f5f7f8;
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 500px;
+    max-height: 700px;
+    overflow: hidden;
+    border: 1px solid #e1e5e8;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark .canvas-container {
+    background: #26272c;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Подсказка удалена для улучшения UX на мобильных устройствах */
+
+@media (max-width: 768px) {
+    .canvas-container {
+        max-height: 500px;
+    }
+    
+    .canvas-controls {
+        padding: 6px;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .icon-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+        padding: 0;
+    }
+    
+    .canvas-checkbox {
+        font-size: 0.8rem;
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+}
+
+#resultsText strong {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+
+.canvas-wrapper.hidden {
+    display: none !important;
+}
+
+.canvas-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 360px;
+    padding: 32px;
+}
+
+.canvas-placeholder.hidden {
+    display: none;
+}
+
+.placeholder-card {
+    padding: 32px 40px;
+    border-radius: 16px;
+    background: rgba(245, 247, 248, 0.75);
+    border: 1px dashed rgba(1, 100, 79, 0.2);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    text-align: center;
+    box-shadow: 0 10px 32px rgba(1, 100, 79, 0.08);
+}
+
+body.theme-dark .placeholder-card {
+    background: rgba(47, 48, 54, 0.65);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+}
+
+#areaCanvas {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #f0f0f0;
+    box-shadow: var(--shadow);
+    max-width: 100%;
+    max-height: 600px;
+}
+
+body.area-mode .canvas-controls {
+    display: none;
+}
+
+/* Скрываем схему по параметрам в режиме area-mode */
+body.area-mode #bestScheme {
+    display: none !important;
+}
+
+/* Скрываем схему по площади, когда НЕ в режиме area-mode */
+body:not(.area-mode) #areaSchemeWrapper {
+    display: none !important;
+}
+
+/* Показываем схему по площади только в режиме area-mode и если не скрыта */
+body.area-mode #areaSchemeWrapper:not(.hidden) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+body.area-mode #selectedSchemeTitle {
+    color: var(--heading-color);
+}
+
+/* Кнопки управления для схемы по площади показываем только на мобильных */
+@media (max-width: 768px) {
+    #areaSchemeWrapper .canvas-controls {
+        display: flex;
+    }
+}
+
+@media (min-width: 769px) {
+    #areaSchemeWrapper .canvas-controls {
+        display: none;
+    }
+}
+
+canvas {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: var(--shadow);
+    display: block;
+    max-width: 100%;
+    max-height: 600px;
+    flex-shrink: 0;
+    /* Оптимизация рендеринга */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    will-change: transform;
+    contain: layout style paint;
+}
+
+.canvas-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid #e1e5e8;
+    z-index: 10;
+    margin-top: 10px;
+}
+
+body.theme-dark .canvas-controls {
+    background: #2f3036;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e1e5e8;
+    background: #ffffff;
+    color: var(--text-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+}
+
+body.theme-dark .icon-btn {
+    background: #2f3036;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.icon-btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #ffffff;
+}
+
+.icon-btn:active {
+    opacity: 0.9;
+}
+
+.stats-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: #f5f7f8;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #e1e5e8;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.6), 
+        transparent
+    );
+    pointer-events: none;
+}
+
+body.theme-dark .stat-card {
+    background: rgba(38, 39, 44, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .stat-card::before {
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent
+    );
+}
+
+.stat-card-button {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.stat-label {
+    color: var(--heading-color);
+    font-size: 1rem;
+    margin-bottom: 6px;
+    font-weight: 700;
+    line-height: 1.3;
+    cursor: help;
+}
+
+.stat-value {
+    color: var(--accent-color);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.input-panel {
+    max-height: none;
+    overflow-y: visible;
+}
+
+.input-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.input-panel::-webkit-scrollbar-track {
+    background: var(--bg-subtle);
+    border-radius: 4px;
+}
+
+.input-panel::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.input-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .input-panel {
+        position: static;
+        max-height: none;
+    }
+    
+    .stats-panel {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .container {
+        padding: 0 12px;
+    }
+    
+    .stats-panel {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .card {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding-top: 60px; /* место под логотип сверху */
+        text-align: center;
+    }
+
+    .brand-logo {
+        left: 50%;
+        top: 10px;
+        transform: translateX(-50%);
+        height: 48px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+
+    .stats-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .canvas-container {
+        min-height: 65vh;
+        padding: 14px;
+    }
+
+    .canvas-wrapper {
+        gap: 12px;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    .icon-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.4rem;
+    }
+
+    .btn {
+        padding: 16px 20px;
+        font-size: 1.05rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+    
+    .container {
+        padding: 0 8px;
+    }
+    
+    .header {
+        padding-top: 55px;
+        padding: 55px 12px 16px;
+    }
+
+    .brand-logo {
+        left: 50%;
+        top: 8px;
+        transform: translateX(-50%);
+        height: 40px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .btn {
+        padding: 14px 18px;
+        font-size: 1rem;
+    }
+    
+    .stats-panel {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .stat-value {
+        font-size: 1.4rem;
+    }
+    
+    .form-group input[type="number"],
+    .form-group input[type="text"] {
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+    
+    /* Увеличиваем размер схемы по площади в мобильной версии */
+    #areaCanvas {
+        max-width: 100% !important;
+        max-height: 340px !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain;
+    }
+    
+    /* Сжимаем контейнер под размер схемы и показываем кнопки */
+    #areaSchemeWrapper {
+        max-width: 100%;
+        width: fit-content;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+    }
+    
+    /* Показываем кнопки управления для схемы по площади */
+    #areaSchemeWrapper .canvas-controls {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+.leg-fields {
+    padding-left: 16px;
+    border-left: 2px solid var(--accent-color);
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.scheme-header {
+    margin-bottom: 16px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.scheme-header h2 {
+    color: var(--heading-color);
+    font-size: 1.1rem;
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+/* В светлой теме заголовок схемы остаётся фирменным зелёным */
+body:not(.theme-dark) .scheme-header h2 {
+    color: var(--accent-color);
+}
+
+.btn-print {
+    width: 100%;
+    padding: 12px 16px;
+    background: #01644f;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-print-arrow {
+    display: inline-flex;
+    align-items: center;
+    color: #ffffff;
+    stroke: #ffffff;
+    flex-shrink: 0;
+}
+
+.btn-print:hover {
+    background: #015a47;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn-print:active {
+    transform: scale(0.98);
+    background: #015a47;
+}
+
+.btn-share-compact {
+    padding: 6px 12px;
+    background: #f5f7f8;
+    color: var(--text-secondary);
+    border: 1px solid #e1e5e8;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: border-color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.05);
+}
+
+body.theme-dark .btn-share-compact {
+    background: #26272c;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn-share-compact:hover {
+    background: var(--bg-subtle);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-share-compact:active {
+    opacity: 0.9;
+}
+
+.btn-share-compact svg {
+    flex-shrink: 0;
+}
+
+.canvas-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e1e5e8;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    user-select: none;
+}
+
+body.theme-dark .canvas-checkbox {
+    background: #2f3036;
+    border: 1px solid #3a3b42;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.canvas-checkbox:hover {
+    background: #ffffff;
+    border-color: var(--accent-color);
+    box-shadow: 0 2px 8px 0 rgba(1, 100, 79, 0.2);
+}
+
+body.theme-dark .canvas-checkbox:hover {
+    background: #35363c;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+.canvas-checkbox input[type="checkbox"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Анимации для сообщений */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
