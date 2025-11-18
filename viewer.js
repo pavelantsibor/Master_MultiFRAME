@@ -46,6 +46,14 @@ function generatePhotoList() {
     }));
 }
 
+// Предзагрузка всех фото в галерее
+function preloadGalleryPhotos(photos) {
+    photos.forEach(photo => {
+        const img = new Image();
+        img.src = encodeURI(photo.file);
+    });
+}
+
 const galleryPhotos = generatePhotoList();
 let currentPhotoList = [];
 let currentPhotoIndex = 0;
@@ -55,6 +63,13 @@ const overlayBackButton = document.getElementById('fullscreenBackButton');
 let overlayMode = null;
 // Кэш для конвертированных PDF страниц
 const pdfCache = new Map();
+
+// Переменные для pinch-to-zoom
+let initialDistance = 0;
+let initialScale = 1;
+let currentScale = 1;
+let isZooming = false;
+let lastTouchTime = 0;
 
 function setOverlayMode(mode) {
     overlayMode = mode;
@@ -216,6 +231,11 @@ function renderContent(section) {
                     }).join('')}
                 </div>
             `;
+            // Предзагрузка всех изображений в списке документов
+            const imageItems = section.items.filter(item => item.file.match(/\.(jpg|jpeg|png|gif)$/i));
+            if (imageItems.length > 0) {
+                preloadGalleryPhotos(imageItems);
+            }
             break;
             
         case 'photo-gallery':
@@ -224,11 +244,13 @@ function renderContent(section) {
                 <div class="photo-gallery fade-in">
                     ${section.items.map((item, index) => `
                         <div class="photo-item" onclick="openPhotoModal('${item.file.replace(/'/g, "\\'")}', ${index}, 'gallery')">
-                            <img src="${encodeURI(item.file)}" alt="${item.name}" loading="lazy">
+                            <img src="${encodeURI(item.file)}" alt="${item.name}">
                         </div>
                     `).join('')}
                 </div>
             `;
+            // Предзагрузка всех фото в галерее
+            preloadGalleryPhotos(section.items);
             break;
         
         case 'pdf-list':
@@ -455,6 +477,9 @@ function closePdfViewer() {
 function openPhotoModal(file, index, source) {
     const modal = document.getElementById('photoModal');
     const viewerContainer = document.getElementById('viewerContainer');
+    
+    // Сбрасываем зум при открытии модального окна
+    resetPhotoZoom();
 
     if (source === 'certificates') {
         // Фильтруем только изображения (не PDF) для списка фото
@@ -531,6 +556,8 @@ function openPhotoModal(file, index, source) {
 function closePhotoModal() {
     const modal = document.getElementById('photoModal');
     const viewerContainer = document.getElementById('viewerContainer');
+    // Сбрасываем зум при закрытии
+    resetPhotoZoom();
     modal.classList.remove('active');
     viewerContainer.style.display = 'block';
     setOverlayMode(null);
@@ -542,6 +569,10 @@ function showPhoto() {
     const counter = document.getElementById('photoCounter');
     const photo = currentPhotoList[currentPhotoIndex];
     if (!photo) return;
+    
+    // Сбрасываем зум при смене фото
+    resetPhotoZoom();
+    
     img.classList.remove('photo-fade');
     // force reflow for animation restart
     void img.offsetWidth;
@@ -554,6 +585,28 @@ function showPhoto() {
     img.alt = photo.name || 'Фото';
     img.classList.add('photo-fade');
     counter.textContent = `${currentPhotoIndex + 1} / ${currentPhotoList.length}`;
+}
+
+// Сброс зума фото
+function resetPhotoZoom() {
+    const img = document.getElementById('photoActive');
+    if (img) {
+        currentScale = 1;
+        initialScale = 1;
+        isZooming = false;
+        img.style.transform = 'scale(1)';
+        img.style.transition = 'transform 0.3s ease-out';
+        setTimeout(() => {
+            img.style.transition = '';
+        }, 300);
+    }
+}
+
+// Вычисление расстояния между двумя точками касания
+function getTouchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
 function nextPhoto() {
@@ -569,15 +622,93 @@ function prevPhoto() {
 }
 
 function handleTouchStart(e) {
-    touchStartX = e.changedTouches[0].clientX;
+    const touches = e.touches;
+    
+    // Если два пальца - начинаем зум
+    if (touches.length === 2) {
+        e.preventDefault();
+        isZooming = true;
+        initialDistance = getTouchDistance(touches);
+        initialScale = currentScale;
+        lastTouchTime = Date.now();
+    } else if (touches.length === 1) {
+        // Один палец - сохраняем для свайпа
+        touchStartX = touches[0].clientX;
+        isZooming = false;
+    }
+}
+
+function handleTouchMove(e) {
+    if (!isZooming) return;
+    
+    const touches = e.touches;
+    if (touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = getTouchDistance(touches);
+        const scale = (currentDistance / initialDistance) * initialScale;
+        
+        // Ограничиваем масштаб от 1 до 5
+        currentScale = Math.max(1, Math.min(5, scale));
+        
+        const img = document.getElementById('photoActive');
+        if (img) {
+            img.style.transform = `scale(${currentScale})`;
+            img.style.transition = 'none';
+        }
+    }
 }
 
 function handleTouchEnd(e) {
-    touchEndX = e.changedTouches[0].clientX;
-    if (touchStartX - touchEndX > 40) {
-        nextPhoto();
-    } else if (touchEndX - touchStartX > 40) {
-        prevPhoto();
+    const touches = e.touches;
+    const changedTouches = e.changedTouches;
+    
+    // Если был зум и все пальцы убраны
+    if (touches.length === 0 && isZooming) {
+        // Возвращаем к исходному размеру при отпускании пальцев
+        if (currentScale > 1) {
+            const img = document.getElementById('photoActive');
+            if (img) {
+                img.style.transform = 'scale(1)';
+                img.style.transition = 'transform 0.3s ease-out';
+                currentScale = 1;
+                initialScale = 1;
+            }
+        }
+        isZooming = false;
+        return;
+    }
+    
+    // Если остался один палец после зума, сбрасываем зум
+    if (touches.length === 1 && isZooming) {
+        isZooming = false;
+        const img = document.getElementById('photoActive');
+        if (img && currentScale > 1) {
+            img.style.transform = 'scale(1)';
+            img.style.transition = 'transform 0.3s ease-out';
+            currentScale = 1;
+            initialScale = 1;
+        }
+        // Обновляем touchStartX для возможного свайпа
+        touchStartX = touches[0].clientX;
+        return;
+    }
+    
+    // Если один палец и не было зума - проверяем свайп
+    if (touches.length === 1 && !isZooming) {
+        touchEndX = touches[0].clientX;
+        if (touchStartX - touchEndX > 40) {
+            nextPhoto();
+        } else if (touchEndX - touchStartX > 40) {
+            prevPhoto();
+        }
+    } else if (touches.length === 0 && !isZooming && changedTouches.length === 1) {
+        // Если был один палец и он убран - проверяем свайп по последней позиции
+        touchEndX = changedTouches[0].clientX;
+        if (touchStartX - touchEndX > 40) {
+            nextPhoto();
+        } else if (touchEndX - touchStartX > 40) {
+            prevPhoto();
+        }
     }
 }
 
@@ -589,7 +720,9 @@ function resetUrl() {
 
 const photoWrapper = document.getElementById('photoWrapper');
 if (photoWrapper) {
-    photoWrapper.addEventListener('touchstart', handleTouchStart, { passive: true });
+    // Используем passive: false для touchstart, чтобы можно было вызывать preventDefault при зуме
+    photoWrapper.addEventListener('touchstart', handleTouchStart, { passive: false });
+    photoWrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
     photoWrapper.addEventListener('touchend', handleTouchEnd, { passive: true });
 }
 
