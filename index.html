@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="MultiFrame от STANDARTPLAST - выставочное приложение">
+    <meta name="theme-color" content="#00644F">
+    <title>MultiFrame - STANDARTPLAST</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="Замер ДО и ПОСЛЕ/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="Замер ДО и ПОСЛЕ/icon-512.png">
+</head>
+<body>
+    <!-- Заставка (скрыта по умолчанию) -->
+    <div id="screensaver" class="screensaver hidden">
+        <video id="screensaverVideo" autoplay loop muted playsinline>
+            <source src="Видео о MultiFrame/Монтаж MultiFrame на объекте.mp4" type="video/mp4">
+        </video>
+        <div class="screensaver-overlay">
+            <div class="screensaver-logo">
+                <h1>MultiFrame</h1>
+                <p>STANDARTPLAST</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div id="mainContent" class="main-content">
+        <!-- Шапка -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo-multiframe.png" alt="MultiFrame by STANDARTPLAST" class="brand-logo">
+                </div>
+            </div>
+        </header>
+
+        <!-- Навигационные карточки -->
+        <div class="cards-container">
+            <a href="viewer.html?section=calculator" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="calculation.png" alt="Калькулятор">
+                    </div>
+                    <h2 class="card-title">Калькулятор</h2>
+                    <p class="card-description">Точный подбор схемы и количества панелей</p>
+                </div>
+            </a>
+
+            <a href="viewer.html?section=videos" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="play.png" alt="Видео">
+                    </div>
+                    <h2 class="card-title">Видео о MultiFrame</h2>
+                    <p class="card-description">Короткие ролики о продукте и монтаже</p>
+                </div>
+            </a>
+
+            <a href="viewer.html?section=noisemeter" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="sound.png" alt="Замер шума">
+                    </div>
+                    <h2 class="card-title">Замер ДО и ПОСЛЕ</h2>
+                    <p class="card-description">PWA-шумомер для фиксации результата</p>
+                </div>
+            </a>
+
+            <a href="viewer.html?section=presentations" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="presentation.png" alt="Презентации">
+                    </div>
+                    <h2 class="card-title">Презентации MultiFrame</h2>
+                    <p class="card-description">PDF с преимуществами и готовыми решениями</p>
+                </div>
+            </a>
+
+            <a href="viewer.html?section=certificates" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="certification.png" alt="Сертификаты">
+                    </div>
+                    <h2 class="card-title">Сертификаты MultiFrame</h2>
+                    <p class="card-description">Патенты, протоколы испытаний и сертификаты</p>
+                </div>
+            </a>
+
+            <a href="viewer.html?section=photos" class="card-link">
+                <div class="nav-card">
+                    <div class="card-icon">
+                        <img src="picture.png" alt="Фото">
+                    </div>
+                    <h2 class="card-title">Фото MultiFrame на объекте</h2>
+                    <p class="card-description">Реальные объекты с установленным MultiFrame</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

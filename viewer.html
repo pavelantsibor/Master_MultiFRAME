@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Просмотр материалов MultiFrame">
+    <meta name="theme-color" content="#00644F">
+    <title>MultiFrame - Просмотр</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="viewer-container" id="viewerContainer">
+        <!-- Шапка (скрывается для iframe) -->
+        <div class="viewer-header" id="viewerHeader">
+            <a href="index.html" class="back-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Назад
+            </a>
+            <h1 class="viewer-title" id="viewerTitle">Загрузка...</h1>
+        </div>
+        
+        <div class="viewer-content" id="viewerContent">
+            <!-- Контент будет загружен динамически -->
+        </div>
+    </div>
+
+    <!-- Кнопка "Назад" для полноэкранных режимов (iframe) -->
+    <button class="overlay-back-button overlay-floating" id="fullscreenBackButton" style="display:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Назад
+    </button>
+
+    <!-- Просмотрщик фото -->
+    <div class="modal" id="photoModal">
+        <div class="modal-content">
+            <button class="photo-nav photo-prev" onclick="prevPhoto()">‹</button>
+            <button class="photo-nav photo-next" onclick="nextPhoto()">›</button>
+            <div id="photoWrapper">
+                <img id="photoActive" src="" alt="">
+            </div>
+            <div class="photo-counter" id="photoCounter"></div>
+        </div>
+    </div>
+
+    <!-- Просмотрщик видео -->
+    <div class="video-viewer" id="videoViewer">
+        <video id="videoPlayer" controls playsinline></video>
+        <div class="video-title-overlay" id="videoViewerTitle"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="viewer.js"></script>
+</body>
+</html>
+
