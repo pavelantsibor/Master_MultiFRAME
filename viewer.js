@@ -526,5 +526,48 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Автоматический переход в полноэкранный режим при загрузке (для viewer.html)
+function requestFullscreen() {
+    const elem = document.documentElement;
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+        
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => {
+                console.log('Ошибка перехода в fullscreen:', err);
+            });
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    }
+}
+
+// Переход в полноэкранный режим при загрузке
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        requestFullscreen();
+    }, 300);
+});
+
+// Также пробуем при первом взаимодействии пользователя
+let fullscreenAttempted = false;
+['click', 'touchstart', 'keydown'].forEach(event => {
+    document.addEventListener(event, () => {
+        if (!fullscreenAttempted && !document.fullscreenElement && 
+            !document.webkitFullscreenElement && !document.mozFullScreenElement && 
+            !document.msFullscreenElement) {
+            fullscreenAttempted = true;
+            setTimeout(() => {
+                requestFullscreen();
+            }, 100);
+        }
+    }, { once: true });
+});
+
 setOverlayMode(null);
 document.addEventListener('DOMContentLoaded', initViewer);
