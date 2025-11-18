@@ -13,10 +13,10 @@ const sections = {
     noisemeter: { title: 'Замер ДО и ПОСЛЕ', type: 'iframe', url: 'NOISE LEVEL/index.html', fullscreen: false },
     presentations: {
         title: 'Презентации MultiFrame',
-        type: 'pdf-gallery',
+        type: 'pdf-list',
         items: [
-            'PRESENTATIONS/Презентация MultiFRAME 24.09.2025_compressed.pdf',
-            'PRESENTATIONS/Презентация Теория акустики 22.10.2025 в печать.pdf'
+            { name: 'Презентация MultiFRAME 24.09.2025', file: 'PRESENTATIONS/Презентация MultiFRAME 24.09.2025_compressed.pdf' },
+            { name: 'Презентация Теория акустики 22.10.2025', file: 'PRESENTATIONS/Презентация Теория акустики 22.10.2025 в печать.pdf' }
         ]
     },
     certificates: {
@@ -34,28 +34,11 @@ const sections = {
 };
 
 function generatePhotoList() {
-    const photoNames = [
-        'IMG_1457.JPG', 'IMG_1458.JPG', 'IMG_1459.JPG', 'IMG_1460.JPG', 'IMG_1461.JPG',
-        'IMG_1462.JPG', 'IMG_1463.JPG', 'IMG_1464.JPG', 'IMG_1465.JPG', 'IMG_1466.JPG',
-        'IMG_1467.JPG', 'IMG_1468.JPG', 'IMG_1469.JPG', 'IMG_1470.JPG', 'IMG_1471.JPG',
-        'IMG_1472.JPG', 'IMG_1473.JPG', 'IMG_1474.JPG', 'IMG_1475.JPG', 'IMG_1476.JPG',
-        'IMG_1477.JPG', 'IMG_1478.JPG', 'IMG_1479.JPG', 'IMG_1480.JPG', 'IMG_1481.JPG',
-        'IMG_1482.JPG', 'IMG_1483.JPG', 'IMG_1485.JPG', 'IMG_1486.JPG', 'IMG_1487.JPG',
-        'IMG_1488.JPG', 'IMG_1489.JPG', 'IMG_1490.JPG', 'IMG_1491.JPG', 'IMG_1492.JPG',
-        'IMG_1493.JPG', 'IMG_1494.JPG', 'IMG_1495.JPG', 'IMG_1496.JPG', 'IMG_1497.JPG',
-        'IMG_1498.JPG', 'IMG_1499.JPG', 'IMG_1500.JPG', 'IMG_1501.JPG', 'IMG_1519.JPG',
-        'IMG_1520.JPG', 'IMG_1521.JPG', 'IMG_1522.JPG', 'IMG_1523.JPG', 'IMG_1524.JPG',
-        'IMG_1525.JPG', 'IMG_1526.JPG', 'IMG_1527.JPG', 'IMG_1528.JPG', 'IMG_1529.JPG',
-        'IMG_1530.JPG', 'IMG_1531.JPG', 'IMG_1532.JPG', 'IMG_1547.JPG', 'IMG_1548.JPG',
-        'IMG_1549.JPG', 'IMG_1550.JPG', 'IMG_1551.JPG', 'IMG_1552.JPG', 'IMG_1553.JPG',
-        'IMG_1554.JPG', 'IMG_1573.JPG', 'IMG_1574.JPG', 'IMG_1576.JPG', 'IMG_1577.JPG',
-        'IMG_1578.JPG', 'IMG_1579.JPG', 'IMG_1580.JPG', 'IMG_1581.JPG', 'IMG_1582.JPG',
-        'IMG_1583.JPG', 'IMG_1584.JPG', 'IMG_1585.JPG', 'IMG_1586.JPG', 'IMG_1587.JPG',
-        'IMG_1588.JPG', 'IMG_1604.JPG', 'IMG_1605.JPG', 'IMG_1606.JPG', 'IMG_1607.JPG',
-        'IMG_1608.JPG', 'IMG_1609.JPG', 'IMG_1610.JPG', 'IMG_1611.JPG', 'IMG_1612.JPG',
-        'IMG_1613.JPG', 'IMG_1614.JPG', 'IMG_1615.JPG', 'IMG_1616.JPG', 'IMG_1617.JPG',
-        'IMG_1618.JPG', 'IMG_1619.JPG', 'IMG_1621.JPG'
-    ];
+    // Генерируем список фото от 1 до 19 в числовом порядке
+    const photoNames = [];
+    for (let i = 1; i <= 19; i++) {
+        photoNames.push(`${i}.JPG`);
+    }
 
     return photoNames.map(name => ({
         name: name.replace('.JPG', ''),
@@ -70,16 +53,9 @@ let touchStartX = 0;
 let touchEndX = 0;
 const overlayBackButton = document.getElementById('fullscreenBackButton');
 let overlayMode = null;
-let pdfCache = new Map(); // Кэш для рендеринга PDF слайдов
+// PDF кэш больше не нужен - используем iframe
 
-// Инициализация PDF.js worker
-function initPdfJs() {
-    if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        return true;
-    }
-    return false;
-}
+// PDF.js больше не используется - используем iframe для прямого просмотра PDF
 
 function setOverlayMode(mode) {
     overlayMode = mode;
@@ -104,6 +80,14 @@ overlayBackButton.addEventListener('click', () => {
             break;
         case 'pdf':
             closePdfViewer();
+            // Перезагружаем страницу для возврата к списку
+            const urlParams = new URLSearchParams(window.location.search);
+            const section = urlParams.get('section');
+            if (section) {
+                window.location.href = `viewer.html?section=${section}`;
+            } else {
+                window.location.href = 'index.html';
+            }
             break;
         case 'iframe':
         default:
@@ -214,7 +198,7 @@ function renderContent(section) {
                         
                         if (isPDF) {
                             return `
-                                <div class="document-item" onclick="openDriveGallery(${index}, 'certificates')">
+                                <div class="document-item" onclick="openPdfViewer('${item.file.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')">
                                     <div class="document-icon">
                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -256,15 +240,22 @@ function renderContent(section) {
             `;
             break;
         
-        case 'pdf-gallery':
+        case 'pdf-list':
             content.innerHTML = `
-                <div class="photo-gallery fade-in" id="presentationsGallery">
-                    <div style="text-align: center; padding: 2rem; color: #666;">
-                        <p>Загрузка презентаций...</p>
-                    </div>
+                <div class="document-list fade-in">
+                    ${section.items.map((item, index) => `
+                        <div class="document-item" onclick="openPdfViewer('${item.file.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')">
+                            <div class="document-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="document-name">${item.name}</div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
-            loadPdfPresentations(section.items);
             break;
     }
 }
@@ -275,12 +266,15 @@ function openItem(section, item, index) {
         openVideo(item.file, item.name, index);
     } else if (section.type === 'document-list') {
         if (item.file.endsWith('.pdf')) {
-            openDriveGallery(index, 'certificates');
+            openPdfViewer(item.file, item.name);
         } else if (item.file.match(/\.(jpg|jpeg|png|gif)$/i)) {
             openPhotoModal(item.file, index, 'certificates');
         }
-    } else if (section.type === 'pdf-gallery') {
-        openPdfPresentation(index, 'presentations');
+    } else if (section.type === 'pdf-list') {
+        const item = section.items[index];
+        if (item) {
+            openPdfViewer(item.file, item.name);
+        }
     }
 }
 
@@ -315,238 +309,53 @@ function closeVideoViewer() {
     resetUrl();
 }
 
-// Загрузка файла как ArrayBuffer (работает с file:// протоколом)
-async function loadFileAsArrayBuffer(filePath) {
-    // Пробуем XMLHttpRequest с responseType: 'arraybuffer'
-    // Это может работать для file:// протокола в некоторых браузерах
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', filePath, true);
-        xhr.responseType = 'arraybuffer';
-        
-        xhr.onload = function() {
-            // Для file:// протокола status может быть 0 (успех) или 200
-            if (xhr.status === 0 || xhr.status === 200) {
-                if (xhr.response) {
-                    resolve(xhr.response);
-                } else {
-                    reject(new Error('Empty response'));
-                }
-            } else {
-                reject(new Error(`Failed to load file: status ${xhr.status}`));
-            }
-        };
-        
-        xhr.onerror = function() {
-            reject(new Error('Network error loading file'));
-        };
-        
-        xhr.ontimeout = function() {
-            reject(new Error('Timeout loading file'));
-        };
-        
-        // Устанавливаем таймаут
-        xhr.timeout = 30000; // 30 секунд
-        
-        try {
-            xhr.send(null);
-        } catch (e) {
-            reject(new Error(`Failed to send request: ${e.message}`));
-        }
-    });
-}
-
-// Загрузка и рендеринг PDF презентаций
-async function loadPdfPresentations(pdfFiles) {
-    const gallery = document.getElementById('presentationsGallery');
-    if (!gallery) return;
-
-    // Ждем загрузки PDF.js
-    if (!initPdfJs()) {
-        let attempts = 0;
-        while (typeof pdfjsLib === 'undefined' && attempts < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        if (!initPdfJs()) {
-            gallery.innerHTML = '<div style="text-align: center; padding: 2rem; color: #c00;"><p>Ошибка загрузки библиотеки PDF.js</p></div>';
-            return;
-        }
-    }
-
-    gallery.innerHTML = '';
-    
-    for (let i = 0; i < pdfFiles.length; i++) {
-        const pdfFile = pdfFiles[i];
-        const fileName = pdfFile.split('/').pop().replace('.pdf', '');
-        
-        try {
-            // Рендерим первую страницу как превью
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'photo-item';
-            loadingDiv.style.position = 'relative';
-            loadingDiv.innerHTML = `
-                <div style="width: 100%; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-                    <p style="color: #666;">Загрузка...</p>
-                </div>
-            `;
-            gallery.appendChild(loadingDiv);
-
-            // Загружаем файл как ArrayBuffer для работы с file:// протоколом
-            const arrayBuffer = await loadFileAsArrayBuffer(pdfFile);
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const page = await pdf.getPage(1);
-            const viewport = page.getViewport({ scale: 1.5 });
-            
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Сохраняем PDF в кэш
-            if (!pdfCache.has(pdfFile)) {
-                pdfCache.set(pdfFile, pdf);
-            }
-
-            // Заменяем загрузочный блок на превью
-            loadingDiv.innerHTML = '';
-            loadingDiv.onclick = () => openPdfPresentation(i, 'presentations');
-            const img = document.createElement('img');
-            img.src = imageUrl;
-            img.alt = fileName;
-            img.loading = 'lazy';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.borderRadius = '8px';
-            img.style.cursor = 'pointer';
-            loadingDiv.appendChild(img);
-            
-        } catch (error) {
-            console.error('Ошибка загрузки PDF:', pdfFile, error);
-            
-            // Если загрузка не удалась из-за CORS, показываем сообщение с инструкцией
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'photo-item';
-            const errorMessage = error.message && error.message.includes('CORS') 
-                ? 'Для просмотра PDF необходим локальный веб-сервер' 
-                : 'Ошибка загрузки';
-            errorDiv.innerHTML = `
-                <div style="width: 100%; min-height: 200px; background: #fee; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; color: #c00; padding: 1rem; text-align: center;">
-                    <p style="margin: 0.5rem 0;"><strong>${errorMessage}</strong></p>
-                    <p style="margin: 0.5rem 0; font-size: 0.9em; color: #666;">
-                        ${fileName}
-                    </p>
-                    <p style="margin: 0.5rem 0; font-size: 0.8em; color: #888;">
-                        Запустите локальный веб-сервер:<br>
-                        <code style="background: #fff; padding: 0.2rem 0.4rem; border-radius: 4px;">python -m http.server 8000</code>
-                    </p>
-                </div>
-            `;
-            gallery.appendChild(errorDiv);
-        }
-    }
-}
-
-// Открытие PDF презентации как слайдов
-async function openPdfPresentation(pdfIndex, source) {
-    const modal = document.getElementById('photoModal');
+// Открытие PDF в полноэкранном режиме через iframe (работает с file://)
+function openPdfViewer(pdfFile, pdfName) {
     const viewerContainer = document.getElementById('viewerContainer');
+    const header = document.getElementById('viewerHeader');
+    const content = document.getElementById('viewerContent');
     
-    const pdfFile = sections.presentations.items[pdfIndex];
-    if (!pdfFile) return;
-
-    // Инициализируем PDF.js если еще не инициализирован
-    if (!initPdfJs()) {
-        let attempts = 0;
-        while (typeof pdfjsLib === 'undefined' && attempts < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        if (!initPdfJs()) {
-            alert('Ошибка загрузки библиотеки PDF.js');
-            return;
-        }
-    }
-
-    // Показываем индикатор загрузки
-    viewerContainer.style.display = 'none';
-    modal.classList.add('active');
-    setOverlayMode('photo');
+    viewerContainer.style.display = 'block';
+    // Убираем padding и margin для максимальной ширины
+    viewerContainer.style.padding = '0';
+    viewerContainer.style.margin = '0';
+    // Скрываем шапку с кнопкой "Назад", используем только полупрозрачную кнопку
+    header.style.display = 'none';
+    setOverlayMode('pdf');
     
-    const img = document.getElementById('photoActive');
-    const counter = document.getElementById('photoCounter');
-    img.src = '';
-    counter.textContent = 'Загрузка...';
+    // Создаем полноэкранный просмотрщик PDF на всю ширину
+    content.innerHTML = `
+        <div class="pdf-viewer-fullscreen fade-in" style="width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; margin: 0; padding: 0; overflow: hidden;">
+            <iframe 
+                src="${encodeURI(pdfFile)}" 
+                style="width: 100%; height: 100%; border: none; border-radius: 0; display: block;"
+                type="application/pdf"
+            ></iframe>
+        </div>
+    `;
+    
+    // Обновляем заголовок (он скрыт, но на всякий случай)
+    document.getElementById('viewerTitle').textContent = pdfName || 'Презентация';
+}
 
-    try {
-        let pdf;
-        if (pdfCache.has(pdfFile)) {
-            pdf = pdfCache.get(pdfFile);
-        } else {
-            // Загружаем файл как ArrayBuffer для работы с file:// протоколом
-            const arrayBuffer = await loadFileAsArrayBuffer(pdfFile);
-            pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            pdfCache.set(pdfFile, pdf);
-        }
-
-        const numPages = pdf.numPages;
-        currentPhotoList = [];
-        
-        // Рендерим все страницы
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 2 });
-            
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
-
-            const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
-            currentPhotoList.push({
-                name: `Слайд ${pageNum}`,
-                file: imageUrl, // Используем data URL
-                isDataUrl: true
-            });
-        }
-
-        currentPhotoIndex = 0;
-        showPhoto();
-    } catch (error) {
-        console.error('Ошибка открытия PDF:', error);
-        counter.textContent = 'Ошибка загрузки';
-        img.src = '';
-        
-        // Показываем сообщение об ошибке
-        const errorMsg = document.createElement('div');
-        errorMsg.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #c00; padding: 1rem; background: rgba(255,255,255,0.9); border-radius: 8px; max-width: 80%;';
-        errorMsg.innerHTML = `
-            <p style="margin: 0.5rem 0;"><strong>Ошибка загрузки PDF</strong></p>
-            <p style="margin: 0.5rem 0; font-size: 0.9em; color: #666;">
-                Для просмотра PDF необходим локальный веб-сервер
-            </p>
-            <p style="margin: 0.5rem 0; font-size: 0.8em; color: #888;">
-                Запустите:<br>
-                <code style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 4px;">python -m http.server 8000</code>
-            </p>
-        `;
-        const photoWrapper = document.getElementById('photoWrapper');
-        if (photoWrapper) {
-            photoWrapper.appendChild(errorMsg);
-        }
+function closePdfViewer() {
+    const viewerContainer = document.getElementById('viewerContainer');
+    const header = document.getElementById('viewerHeader');
+    const content = document.getElementById('viewerContent');
+    
+    // Очищаем iframe
+    const iframe = content.querySelector('iframe');
+    if (iframe) {
+        iframe.src = '';
     }
+    
+    // Восстанавливаем padding и margin
+    viewerContainer.style.padding = '';
+    viewerContainer.style.margin = '';
+    // Восстанавливаем шапку
+    header.style.display = 'flex';
+    setOverlayMode(null);
+    resetUrl();
 }
 
 function openPhotoModal(file, index, source) {
@@ -554,10 +363,13 @@ function openPhotoModal(file, index, source) {
     const viewerContainer = document.getElementById('viewerContainer');
 
     if (source === 'certificates') {
-        currentPhotoList = sections.certificates.items.filter(item => item.file.match(/\.(jpg|jpeg|png|gif|pdf)$/i)).map(item => ({
-            name: item.name,
-            file: item.file.endsWith('.pdf') ? item.file.replace('.pdf', '.jpg') : item.file
-        }));
+        // Фильтруем только изображения (не PDF) для списка фото
+        currentPhotoList = sections.certificates.items
+            .filter(item => item.file.match(/\.(jpg|jpeg|png|gif)$/i))
+            .map(item => ({
+                name: item.name,
+                file: item.file
+            }));
     } else if (source === 'presentations') {
         // Эта функция больше не используется для презентаций
         // Используется openPdfPresentation вместо неё
@@ -567,15 +379,40 @@ function openPhotoModal(file, index, source) {
     }
 
     if (typeof index !== 'number' || Number.isNaN(index)) {
+        // Ищем по имени файла
         currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file === file);
+        if (currentPhotoIndex < 0) {
+            // Если не найдено, пробуем найти по части пути
+            const fileName = file.split('/').pop();
+            currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file.includes(fileName));
+        }
     } else if (source === 'certificates') {
-        const targetFile = sections.certificates.items[index].file;
-        currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file === targetFile);
+        // Используем индекс для поиска правильного изображения
+        const targetItem = sections.certificates.items[index];
+        if (targetItem) {
+            const targetFile = targetItem.file;
+            // Ищем только среди изображений
+            if (targetFile.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                currentPhotoIndex = currentPhotoList.findIndex(photo => photo.file === targetFile);
+            } else {
+                // Если это PDF, не должны попадать сюда, но на всякий случай
+                currentPhotoIndex = 0;
+            }
+        } else {
+            currentPhotoIndex = 0;
+        }
     } else {
         currentPhotoIndex = index;
     }
 
     if (currentPhotoIndex < 0) currentPhotoIndex = 0;
+    
+    // Проверяем что есть фото для отображения
+    if (currentPhotoList.length === 0) {
+        console.error('Нет фотографий для отображения');
+        return;
+    }
+    
     showPhoto();
 
     viewerContainer.style.display = 'none';
@@ -652,15 +489,42 @@ window.nextPhoto = nextPhoto;
 window.prevPhoto = prevPhoto;
 window.closePhotoModal = closePhotoModal;
 window.openPhotoModal = openPhotoModal;
-window.openPdfPresentation = openPdfPresentation;
+window.openPdfViewer = openPdfViewer;
+window.closePdfViewer = closePdfViewer;
 window.openDriveGallery = function(index, source) {
     if (source === 'presentations') {
-        openPdfPresentation(index, source);
+        const item = sections.presentations.items[index];
+        if (item) {
+            openPdfViewer(item.file, item.name);
+        }
     } else {
         const section = sections.certificates;
-        openPhotoModal(section.items[index], index, source);
+        const item = section.items[index];
+        if (item) {
+            if (item.file.endsWith('.pdf')) {
+                openPdfViewer(item.file, item.name);
+            } else {
+                openPhotoModal(item.file, index, source);
+            }
+        }
     }
 };
+
+// Регистрация Service Worker для оффлайн работы
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        if (!window.serviceWorkerRegistered) {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker зарегистрирован в viewer:', registration.scope);
+                    window.serviceWorkerRegistered = true;
+                })
+                .catch(error => {
+                    console.log('Регистрация Service Worker не удалась:', error);
+                });
+        }
+    });
+}
 
 setOverlayMode(null);
 document.addEventListener('DOMContentLoaded', initViewer);

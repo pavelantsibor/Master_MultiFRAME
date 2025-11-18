@@ -1,0 +1,313 @@
+═══════════════════════════════════════════════════════════════
+  СОЗДАНИЕ APK БЕЗ NODE.JS (ТОЛЬКО ANDROID STUDIO)
+═══════════════════════════════════════════════════════════════
+
+Самый простой способ - создать APK напрямую через Android Studio,
+без использования Node.js или других инструментов.
+
+═══════════════════════════════════════════════════════════════
+  СПОСОБ 1: ANDROID STUDIO + TWA (РЕКОМЕНДУЕТСЯ)
+═══════════════════════════════════════════════════════════════
+
+Создайте минимальное Android приложение, которое откроет ваше PWA.
+
+1. УСТАНОВКА ANDROID STUDIO:
+   
+   Скачайте и установите Android Studio:
+   https://developer.android.com/studio
+   
+   ⚠️ ВАЖНО: При установке убедитесь что установлены:
+   - Android SDK
+   - Android SDK Platform
+   - Android Virtual Device (опционально)
+
+2. СОЗДАНИЕ НОВОГО ПРОЕКТА:
+   
+   - Запустите Android Studio
+   - File → New → New Project
+   - Выберите "Empty Activity"
+   - Настройте проект:
+     * Name: MultiFRAME
+     * Package name: com.standartplast.multiframe
+     * Save location: выберите удобную папку
+     * Language: Java (или Kotlin)
+     * Minimum SDK: API 21 (Android 5.0)
+   - Нажмите "Finish"
+
+3. НАСТРОЙКА ПОДДЕРЖКИ TWA:
+   
+   Откройте файл: app/build.gradle (Module: app)
+   
+   Найдите секцию "dependencies" и добавьте:
+   
+   ```
+   dependencies {
+       implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+       // ... остальные зависимости
+   }
+   ```
+   
+   Нажмите "Sync Now" когда появится уведомление.
+
+4. КОПИРОВАНИЕ ФАЙЛОВ PWA:
+   
+   - Создайте папку "assets" если её нет:
+     Right-click на папке app/src/main →
+     New → Folder → Assets Folder
+   
+   - Скопируйте ВСЕ файлы из корневой папки приложения:
+     C:\Users\p_antsibor\Desktop\shumSTP-main\
+     
+     В папку:
+     app/src/main/assets/
+     
+   Включая:
+   * index.html (главная страница)
+   * manifest.json
+   * service-worker.js
+   * app.js
+   * styles.css
+   * viewer.html
+   * viewer.js
+   * ВСЕ папки:
+     - CALCULATOR/
+     - VIDEO/
+     - PHOTO/
+     - PRESENTATIONS/
+     - SERTIFICATIONS/
+     - NOISE LEVEL/ (включая все файлы внутри)
+   * Все изображения (.png, .jpg, .JPG)
+   * Все другие файлы приложения
+     
+   ⚠️ ВАЖНО: Скопируйте ВСЮ структуру папок сохраняя их организацию!
+
+5. НАСТРОЙКА ANDROID MANIFEST:
+   
+   Откройте файл: app/src/main/AndroidManifest.xml
+   
+   Замените содержимое на:
+   
+   ```xml
+   <?xml version="1.0" encoding="utf-8"?>
+   <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+       package="com.standartplast.multiframe">
+   
+       <!-- Разрешение на использование микрофона -->
+       <uses-permission android:name="android.permission.RECORD_AUDIO" />
+       <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+       
+       <!-- Разрешение на доступ в интернет (для Service Worker) -->
+       <uses-permission android:name="android.permission.INTERNET" />
+       <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+   
+       <application
+           android:allowBackup="true"
+           android:icon="@mipmap/ic_launcher"
+           android:label="MultiFRAME"
+           android:roundIcon="@mipmap/ic_launcher_round"
+           android:supportsRtl="true"
+           android:theme="@style/Theme.MultiFRAME"
+           android:usesCleartextTraffic="true">
+           
+           <!-- TWA Activity - главный экран -->
+           <activity
+               android:name="com.google.androidbrowserhelper.trusted.TwaLauncherActivity"
+               android:label="MultiFRAME"
+               android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+               android:exported="true"
+               android:launchMode="singleTask"
+               android:screenOrientation="landscape">
+               
+               <!-- Где находится PWA -->
+               <meta-data
+                   android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                   android:value="file:///android_asset/index.html" />
+               
+               <!-- Иконка запуска -->
+               <intent-filter>
+                   <action android:name="android.intent.action.MAIN" />
+                   <category android:name="android.intent.category.LAUNCHER" />
+               </intent-filter>
+           </activity>
+           
+       </application>
+   
+   </manifest>
+   ```
+
+6. СОЗДАНИЕ ИКОНКИ ПРИЛОЖЕНИЯ:
+   
+   - Right-click на папке app/src/main/res →
+     New → Image Asset
+   - В Asset Studio:
+     * Icon Type: Launcher Icons (Adaptive and Legacy)
+     * Foreground Layer: путь к icon-512.png из папки assets/NOISE LEVEL/
+       (или используйте logo-multiframe.png)
+     * Background Layer: цвет #01644f
+   - Нажмите "Next" → "Finish"
+
+7. СБОРКА APK:
+   
+   - Build → Build Bundle(s) / APK(s) → Build APK(s)
+   - Подождите пока сборка завершится
+   - Когда появится уведомление "Build completed successfully",
+     нажмите "locate"
+   - Или найдите APK вручную:
+     app/build/outputs/apk/debug/app-debug.apk
+
+8. УСТАНОВКА APK:
+   
+   - Передайте APK файл на Android устройство
+   - Откройте файловый менеджер на устройстве
+   - Нажмите на APK файл
+   - Разрешите установку из неизвестных источников
+   - Нажмите "Установить"
+
+═══════════════════════════════════════════════════════════════
+  СПОСОБ 2: PWABUILDER + ЛОКАЛЬНЫЙ ВЕБ-СЕРВЕР
+═══════════════════════════════════════════════════════════════
+
+Если не хотите использовать Android Studio, можно создать
+локальный веб-сервер на компьютере без Node.js.
+
+1. ИСПОЛЬЗОВАНИЕ PYTHON (если установлен):
+   
+   Откройте командную строку в корневой папке приложения:
+   
+   ```bash
+   cd "C:\Users\p_antsibor\Desktop\shumSTP-main"
+   python -m http.server 8000
+   ```
+   
+   Приложение будет доступно по адресу:
+   http://localhost:8000
+
+2. ИСПОЛЬЗОВАНИЕ PHP (если установлен):
+   
+   ```bash
+   php -S localhost:8000
+   ```
+
+3. СОЗДАНИЕ ТУННЕЛЯ:
+   
+   Используйте онлайн сервис для создания туннеля:
+   
+   - https://ngrok.com/ (требует регистрацию, но простой)
+   - https://localtunnel.github.io/www/ (может работать без установки)
+   
+   Запустите локальный сервер (см. выше), затем:
+   
+   ngrok:
+   ```bash
+   ngrok http 8000
+   ```
+   
+   localtunnel:
+   ```bash
+   npx localtunnel --port 8000
+   ```
+   (npx входит в npm, но можно скачать отдельно)
+   
+   Получите URL вида: https://xxxxx.ngrok.io
+
+4. КОНВЕРТАЦИЯ ЧЕРЕЗ PWABUILDER:
+   
+   - Откройте https://www.pwabuilder.com/
+   - Введите URL вашего туннеля (например: https://xxxxx.ngrok.io)
+   - Нажмите "Start"
+   - Выберите "Android" → "Generate Package"
+   - Скачайте готовый APK
+
+═══════════════════════════════════════════════════════════════
+  СПОСОБ 3: ОНЛАЙН ТУННЕЛЬ (БЕЗ УСТАНОВКИ)
+═══════════════════════════════════════════════════════════════
+
+Если Python не установлен, используйте онлайн инструменты:
+
+1. SERVEO (без установки):
+   
+   - Откройте https://serveo.net/
+   - Введите команду в SSH клиенте (если есть):
+   
+   ```bash
+   ssh -R 80:localhost:8000 serveo.net
+   ```
+   
+   Или используйте веб-интерфейс Serveo (если доступен)
+
+2. ZAPER.IO (веб-интерфейс):
+   
+   - Откройте https://zaper.io/
+   - Загрузите архив с файлами приложения
+   - Получите временный URL
+   - Используйте его в PWABuilder
+
+3. ПЕРЕДАТЬ ФАЙЛЫ ДРУГОМУ КОМПЬЮТЕРУ:
+   
+   - Если есть доступ к компьютеру с установленным Node.js
+   - Скопируйте всю папку shumSTP-main туда
+   - Выполните команды Bubblewrap на том компьютере
+   - Получите готовый APK
+
+═══════════════════════════════════════════════════════════════
+  РЕКОМЕНДАЦИЯ: ANDROID STUDIO
+═══════════════════════════════════════════════════════════════
+
+Самый надежный способ без Node.js - использовать Android Studio:
+
+✅ Не требует Node.js
+✅ Не требует веб-сервера
+✅ Полный контроль над приложением
+✅ Можно подписать APK для публикации
+✅ Профессиональный инструмент
+
+Требования:
+- Windows, Mac или Linux
+- ~3 ГБ свободного места
+- Интегрированная среда разработки
+
+═══════════════════════════════════════════════════════════════
+  РЕШЕНИЕ ПРОБЛЕМ
+═══════════════════════════════════════════════════════════════
+
+Проблема: Android Studio не запускается
+Решение: 
+- Проверьте требования системы
+- Убедитесь что Java установлена (Android Studio включает её)
+- Освободите место на диске (нужно ~3 ГБ)
+
+Проблема: APK не собирается
+Решение:
+- Build → Clean Project
+- Build → Rebuild Project
+- Проверьте ошибки в Build Output
+
+Проблема: Микрофон не работает в APK
+Решение:
+- Проверьте что разрешение RECORD_AUDIO добавлено в AndroidManifest.xml
+- Установите APK заново
+- Проверьте разрешения приложения в настройках Android
+
+Проблема: Приложение не открывается
+Решение:
+- Проверьте что все файлы скопированы в assets
+- Убедитесь что путь к index.html правильный в AndroidManifest.xml
+- Проверьте логи в Logcat (View → Tool Windows → Logcat)
+
+═══════════════════════════════════════════════════════════════
+  БЫСТРЫЙ СТАРТ (ANDROID STUDIO)
+═══════════════════════════════════════════════════════════════
+
+1. Скачайте Android Studio: https://developer.android.com/studio
+2. Установите (это займет ~30 минут)
+3. Запустите Android Studio
+4. File → New → New Project → Empty Activity
+5. Назовите: MultiFRAME, Package: com.standartplast.multiframe
+6. Скопируйте все файлы из корневой папки shumSTP-main в app/src/main/assets/
+   (сохраняя структуру папок)
+7. Обновите AndroidManifest.xml (код выше)
+8. Build → Build APK(s)
+9. Готово! APK в app/build/outputs/apk/debug/
+
+═══════════════════════════════════════════════════════════════
+

@@ -127,3 +127,17 @@ if (document.getElementById('screensaverVideo')) {
     });
 }
 
+// Регистрация Service Worker для оффлайн работы
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+                console.log('Service Worker зарегистрирован:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Регистрация Service Worker не удалась:', error);
+                // Не критично - приложение будет работать и без него
+            });
+    });
+}
+
