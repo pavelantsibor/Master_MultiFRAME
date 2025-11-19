@@ -801,7 +801,8 @@ body.area-mode #selectedSchemeTitle {
     }
 }
 
-@media (min-width: 769px) {
+/* Десктопная версия для планшетов */
+@media (min-width: 768px) {
     #areaSchemeWrapper .canvas-controls {
         display: none;
     }
@@ -971,7 +972,14 @@ body.theme-dark .stat-card::before {
     background: var(--accent-color);
 }
 
-@media (max-width: 1200px) {
+/* Для планшетов (768px и выше) - десктопная версия */
+@media (min-width: 768px) {
+    .main-content {
+        grid-template-columns: 360px 1fr;
+    }
+}
+
+@media (max-width: 767px) {
     .main-content {
         grid-template-columns: 1fr;
     }
