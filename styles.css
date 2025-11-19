@@ -38,7 +38,7 @@
 
 /* Touch-оптимизация для планшета */
 html {
-    touch-action: manipulation;
+    touch-action: pan-y pan-x;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -75,6 +75,13 @@ body {
     position: relative;
     margin: 0;
     padding: 0;
+    border: none;
+    outline: none;
+}
+
+html {
+    border: none;
+    outline: none;
 }
 
 /* Заставка */
@@ -703,7 +710,10 @@ body {
     background: var(--color-white);
     padding: 2rem;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pan-x;
+    position: relative;
 }
 
 .viewer-header {
@@ -785,6 +795,8 @@ body {
 .viewer-content {
     max-width: 1200px;
     margin: 0 auto;
+    overflow-y: visible;
+    touch-action: pan-y pan-x;
 }
 
 /* Галерея для фото */
@@ -804,7 +816,7 @@ body {
     transition: var(--transition-smooth);
     aspect-ratio: 4/3;
     -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
+    touch-action: manipulation;
     animation: fadeInUp 0.5s var(--ease-spring) backwards;
 }
 
@@ -1180,7 +1192,7 @@ body {
     border: none;
 }
 
-/* Калькулятор - масштаб 90% и режим как на компьютере для планшета */
+/* Калькулятор - десктопная версия для планшетов */
 .iframe-calculator {
     display: flex;
     align-items: center;
@@ -1189,18 +1201,16 @@ body {
 }
 
 .iframe-calculator iframe {
-    width: 90%;
-    height: 90%;
+    width: 100%;
+    height: 100%;
     border: none;
 }
 
-/* Для планшета в горизонтальной ориентации - режим как на компьютере */
-@media (orientation: landscape) and (min-width: 1024px) {
+/* Для планшета - десктопная версия */
+@media (min-width: 768px) {
     .iframe-calculator iframe {
-        width: 90%;
-        height: 90%;
-        max-width: 1600px;
-        max-height: 900px;
+        width: 100%;
+        height: 100%;
     }
 }
 

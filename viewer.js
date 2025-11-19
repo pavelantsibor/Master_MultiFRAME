@@ -655,19 +655,24 @@ function handleTouchStart(e) {
         initialDistance = getTouchDistance(touches);
         initialScale = currentScale;
         
-        // Вычисляем центр между двумя пальцами
-        const centerX = (touches[0].clientX + touches[1].clientX) / 2;
-        const centerY = (touches[0].clientY + touches[1].clientY) / 2;
-        
         const img = document.getElementById('photoActive');
         const wrapper = document.getElementById('photoWrapper');
         if (img && wrapper) {
+            // Вычисляем центр между двумя пальцами в координатах viewport
+            const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+            const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+            
+            // Получаем позицию изображения
             const imgRect = img.getBoundingClientRect();
             const wrapperRect = wrapper.getBoundingClientRect();
             
-            // Относительные координаты центра касания относительно изображения
-            initialCenterX = centerX - imgRect.left - imgRect.width / 2;
-            initialCenterY = centerY - imgRect.top - imgRect.height / 2;
+            // Центр wrapper'а
+            const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
+            const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
+            
+            // Смещение центра касания относительно центра wrapper'а
+            initialCenterX = centerX - wrapperCenterX;
+            initialCenterY = centerY - wrapperCenterY;
             
             // Сохраняем текущий pan
             initialPanX = panX;
@@ -694,21 +699,23 @@ function handleTouchMove(e) {
         // Ограничиваем масштаб от 1 до 5
         currentScale = Math.max(1, Math.min(5, scale));
         
-        // Вычисляем новый центр между пальцами
-        const centerX = (touches[0].clientX + touches[1].clientX) / 2;
-        const centerY = (touches[0].clientY + touches[1].clientY) / 2;
-        
         const img = document.getElementById('photoActive');
         const wrapper = document.getElementById('photoWrapper');
         if (img && wrapper) {
-            const imgRect = img.getBoundingClientRect();
-            const wrapperRect = wrapper.getBoundingClientRect();
+            // Вычисляем новый центр между пальцами
+            const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+            const centerY = (touches[0].clientY + touches[1].clientY) / 2;
             
-            // Относительные координаты центра касания относительно изображения
-            const currentCenterX = centerX - imgRect.left - imgRect.width / 2;
-            const currentCenterY = centerY - imgRect.top - imgRect.height / 2;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const wrapperCenterX = wrapperRect.left + wrapperRect.width / 2;
+            const wrapperCenterY = wrapperRect.top + wrapperRect.height / 2;
+            
+            // Текущее смещение центра касания относительно центра wrapper'а
+            const currentCenterX = centerX - wrapperCenterX;
+            const currentCenterY = centerY - wrapperCenterY;
             
             // Вычисляем смещение для сохранения точки зума под пальцами
+            // При зуме точка под пальцами должна оставаться на месте
             const deltaX = (currentCenterX - initialCenterX) / currentScale;
             const deltaY = (currentCenterY - initialCenterY) / currentScale;
             
@@ -716,7 +723,7 @@ function handleTouchMove(e) {
             panY = initialPanY - deltaY;
             
             // Ограничиваем pan, чтобы изображение не уходило слишком далеко
-            const maxPan = 200;
+            const maxPan = 300;
             panX = Math.max(-maxPan, Math.min(maxPan, panX));
             panY = Math.max(-maxPan, Math.min(maxPan, panY));
             
@@ -861,6 +868,42 @@ function requestFullscreen() {
         }
     }
 }
+
+// Сохранение полноэкранного режима при переходах
+function maintainFullscreen() {
+    // Проверяем каждые 100мс и восстанавливаем полноэкранный режим если он был потерян
+    setInterval(() => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && !document.msFullscreenElement) {
+            requestFullscreen();
+        }
+    }, 100);
+}
+
+// Обработчики событий для сохранения полноэкранного режима
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        setTimeout(() => requestFullscreen(), 100);
+    }
+});
+
+document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.webkitFullscreenElement) {
+        setTimeout(() => requestFullscreen(), 100);
+    }
+});
+
+document.addEventListener('mozfullscreenchange', () => {
+    if (!document.mozFullScreenElement) {
+        setTimeout(() => requestFullscreen(), 100);
+    }
+});
+
+document.addEventListener('MSFullscreenChange', () => {
+    if (!document.msFullscreenElement) {
+        setTimeout(() => requestFullscreen(), 100);
+    }
+});
 
 // Переход в полноэкранный режим при загрузке
 // Полноэкранный режим требует пользовательского жеста, поэтому не делаем автоматически
