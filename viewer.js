@@ -70,6 +70,12 @@ let initialScale = 1;
 let currentScale = 1;
 let isZooming = false;
 let lastTouchTime = 0;
+let panX = 0;
+let panY = 0;
+let initialPanX = 0;
+let initialPanY = 0;
+let initialCenterX = 0;
+let initialCenterY = 0;
 
 function setOverlayMode(mode) {
     overlayMode = mode;
@@ -131,11 +137,11 @@ function initViewer() {
         section.items = generatePhotoList();
     }
     
-    renderContent(section);
+    renderContent(section, sectionName);
 }
 
 // Рендеринг контента
-function renderContent(section) {
+function renderContent(section, sectionName) {
     const content = document.getElementById('viewerContent');
     const container = document.getElementById('viewerContainer');
     const header = document.getElementById('viewerHeader');
@@ -144,20 +150,34 @@ function renderContent(section) {
     container.style.background = '#fff';
     setOverlayMode(null);
     
+    // Сохраняем полноэкранный режим
+    if (typeof requestFullscreen === 'function') {
+        requestFullscreen();
+    }
+    
     switch (section.type) {
         case 'iframe': {
             const useFullscreen = section.fullscreen !== false;
             const iframeSrc = encodeURI(section.url);
+            const isCalculator = sectionName === 'calculator';
             if (useFullscreen) {
                 container.style.padding = '0';
                 container.style.background = '#fff';
                 header.style.display = 'none';
                 setOverlayMode('iframe');
-                content.innerHTML = `
-                    <div class="iframe-fullscreen fade-in">
-                        <iframe src="${iframeSrc}" frameborder="0"></iframe>
-                    </div>
-                `;
+                if (isCalculator) {
+                    content.innerHTML = `
+                        <div class="iframe-fullscreen iframe-calculator fade-in">
+                            <iframe src="${iframeSrc}" frameborder="0"></iframe>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `
+                        <div class="iframe-fullscreen fade-in">
+                            <iframe src="${iframeSrc}" frameborder="0"></iframe>
+                        </div>
+                    `;
+                }
             } else {
                 header.style.display = 'flex';
                 setOverlayMode(null);
@@ -594,7 +614,11 @@ function resetPhotoZoom() {
         currentScale = 1;
         initialScale = 1;
         isZooming = false;
-        img.style.transform = 'scale(1)';
+        panX = 0;
+        panY = 0;
+        initialPanX = 0;
+        initialPanY = 0;
+        img.style.transform = 'scale(1) translate(0, 0)';
         img.style.transition = 'transform 0.3s ease-out';
         setTimeout(() => {
             img.style.transition = '';
@@ -630,6 +654,26 @@ function handleTouchStart(e) {
         isZooming = true;
         initialDistance = getTouchDistance(touches);
         initialScale = currentScale;
+        
+        // Вычисляем центр между двумя пальцами
+        const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+        const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+        
+        const img = document.getElementById('photoActive');
+        const wrapper = document.getElementById('photoWrapper');
+        if (img && wrapper) {
+            const imgRect = img.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            // Относительные координаты центра касания относительно изображения
+            initialCenterX = centerX - imgRect.left - imgRect.width / 2;
+            initialCenterY = centerY - imgRect.top - imgRect.height / 2;
+            
+            // Сохраняем текущий pan
+            initialPanX = panX;
+            initialPanY = panY;
+        }
+        
         lastTouchTime = Date.now();
     } else if (touches.length === 1) {
         // Один палец - сохраняем для свайпа
@@ -650,9 +694,34 @@ function handleTouchMove(e) {
         // Ограничиваем масштаб от 1 до 5
         currentScale = Math.max(1, Math.min(5, scale));
         
+        // Вычисляем новый центр между пальцами
+        const centerX = (touches[0].clientX + touches[1].clientX) / 2;
+        const centerY = (touches[0].clientY + touches[1].clientY) / 2;
+        
         const img = document.getElementById('photoActive');
-        if (img) {
-            img.style.transform = `scale(${currentScale})`;
+        const wrapper = document.getElementById('photoWrapper');
+        if (img && wrapper) {
+            const imgRect = img.getBoundingClientRect();
+            const wrapperRect = wrapper.getBoundingClientRect();
+            
+            // Относительные координаты центра касания относительно изображения
+            const currentCenterX = centerX - imgRect.left - imgRect.width / 2;
+            const currentCenterY = centerY - imgRect.top - imgRect.height / 2;
+            
+            // Вычисляем смещение для сохранения точки зума под пальцами
+            const deltaX = (currentCenterX - initialCenterX) / currentScale;
+            const deltaY = (currentCenterY - initialCenterY) / currentScale;
+            
+            panX = initialPanX - deltaX;
+            panY = initialPanY - deltaY;
+            
+            // Ограничиваем pan, чтобы изображение не уходило слишком далеко
+            const maxPan = 200;
+            panX = Math.max(-maxPan, Math.min(maxPan, panX));
+            panY = Math.max(-maxPan, Math.min(maxPan, panY));
+            
+            img.style.transform = `scale(${currentScale}) translate(${panX}px, ${panY}px)`;
+            img.style.transformOrigin = 'center center';
             img.style.transition = 'none';
         }
     }
@@ -668,10 +737,12 @@ function handleTouchEnd(e) {
         if (currentScale > 1) {
             const img = document.getElementById('photoActive');
             if (img) {
-                img.style.transform = 'scale(1)';
+                img.style.transform = 'scale(1) translate(0, 0)';
                 img.style.transition = 'transform 0.3s ease-out';
                 currentScale = 1;
                 initialScale = 1;
+                panX = 0;
+                panY = 0;
             }
         }
         isZooming = false;
@@ -683,10 +754,12 @@ function handleTouchEnd(e) {
         isZooming = false;
         const img = document.getElementById('photoActive');
         if (img && currentScale > 1) {
-            img.style.transform = 'scale(1)';
+            img.style.transform = 'scale(1) translate(0, 0)';
             img.style.transition = 'transform 0.3s ease-out';
             currentScale = 1;
             initialScale = 1;
+            panX = 0;
+            panY = 0;
         }
         // Обновляем touchStartX для возможного свайпа
         touchStartX = touches[0].clientX;

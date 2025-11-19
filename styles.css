@@ -341,7 +341,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -420,7 +420,7 @@ body {
 .card-icon {
     width: 126px;
     height: 126px;
-    margin: 70px auto 1.5rem;
+    margin: 0 auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -432,7 +432,6 @@ body {
     min-height: 126px;
     position: relative;
     overflow: hidden;
-    flex-shrink: 0;
 }
 
 .card-icon img {
@@ -459,10 +458,8 @@ body {
     font-weight: 600;
     color: var(--color-text);
     margin-bottom: 0.75rem;
-    margin-top: 0;
     text-align: center;
     line-height: 1.3;
-    flex-shrink: 0;
 }
 
 /* Описание карточки - увеличенный для планшета */
@@ -471,8 +468,6 @@ body {
     color: var(--color-text-light);
     text-align: center;
     line-height: 1.6;
-    margin-top: 0;
-    flex-shrink: 1;
 }
 
 /* Оптимизация для планшета 10" (1280x800 - 1920x1200) */
@@ -502,7 +497,7 @@ body {
         padding: 1.5rem 1.25rem;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: center;
         min-height: 0;
     }
     
@@ -511,9 +506,7 @@ body {
         height: 112px;
         min-width: 112px;
         min-height: 112px;
-        margin-top: 70px;
         margin-bottom: 1rem;
-        flex-shrink: 0;
     }
     
     .card-title {
@@ -596,7 +589,6 @@ body {
 
     .nav-card {
         padding: 1.5rem 1.25rem;
-        justify-content: flex-start;
     }
 
     .card-icon {
@@ -604,8 +596,6 @@ body {
         height: 112px;
         min-width: 112px;
         min-height: 112px;
-        margin-top: 70px;
-        flex-shrink: 0;
     }
 
     .card-title {
@@ -685,7 +675,7 @@ body {
         padding: 1rem 0.75rem;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: center;
     }
 
     .card-icon {
@@ -693,9 +683,7 @@ body {
         height: 84px;
         min-width: 84px;
         min-height: 84px;
-        margin-top: 50px;
         margin-bottom: 0.5rem;
-        flex-shrink: 0;
     }
 
     .card-title {
@@ -714,6 +702,8 @@ body {
     min-height: 100vh;
     background: var(--color-white);
     padding: 2rem;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .viewer-header {
@@ -722,7 +712,6 @@ body {
     justify-content: space-between;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--color-gray);
 }
 
 .back-button,
@@ -815,7 +804,7 @@ body {
     transition: var(--transition-smooth);
     aspect-ratio: 4/3;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    touch-action: pan-y;
     animation: fadeInUp 0.5s var(--ease-spring) backwards;
 }
 
@@ -1108,6 +1097,7 @@ body {
     transition: var(--transition-smooth);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    z-index: 10000;
 }
 
 .photo-nav:hover {
@@ -1133,6 +1123,7 @@ body {
     color: #fff;
     font-size: 1rem;
     letter-spacing: 0.2em;
+    z-index: 10001;
 }
 
 /* Индикатор загрузки PDF */
@@ -1187,6 +1178,30 @@ body {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* Калькулятор - масштаб 90% и режим как на компьютере для планшета */
+.iframe-calculator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7f8;
+}
+
+.iframe-calculator iframe {
+    width: 90%;
+    height: 90%;
+    border: none;
+}
+
+/* Для планшета в горизонтальной ориентации - режим как на компьютере */
+@media (orientation: landscape) and (min-width: 1024px) {
+    .iframe-calculator iframe {
+        width: 90%;
+        height: 90%;
+        max-width: 1600px;
+        max-height: 900px;
+    }
 }
 
 /* Кнопка "Назад" для полноэкранного режима - увеличенная для touch */
